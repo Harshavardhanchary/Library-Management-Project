@@ -18,7 +18,7 @@ pipeline {
                 checkout scmGit(
                     branches: [[name: '*/main']],
                     extensions: [],
-                    userRemoteConfigs: [[url: 'https://github.com/Harshavardhanchary/MGU-Library-Manager.git']]
+                    userRemoteConfigs: [[url: 'https://github.com/Harshavardhanchary/Library-Management-Project.git']]
                     )
                     echo 'Checkout successful'
             }
@@ -62,6 +62,19 @@ DB_USERNAME=${env.DB_USERNAME}
                 sh 'docker ps -a'
             }
         }
+        
+        stage('Docker Login') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin $DOCKER_REGISTRY
+                    '''
+                    }
+                }
+            }
+        }
     }
 }
+
 
