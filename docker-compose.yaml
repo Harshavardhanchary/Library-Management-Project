@@ -2,9 +2,10 @@ version: '3.8'
 
 services:
   backend:
+    image: harshavardhan303/library-manager-backend
     build:
-      context: .
-      dockerfile: dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8081:8080"
     depends_on:
@@ -12,16 +13,14 @@ services:
         condition: service_healthy
     env_file:
       - .env
-    ##healthcheck:
-      ##test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      ##interval: 30s
-      ##timeout: 10s
-      ##retries: 5
     networks:
       - app-network
 
   db:
-    image: mysql:8.0-oraclelinux8
+    image: harshavardhan303/libary-manager-db
+    build:
+      context: ./database
+      dockerfile: Dockerfile
     ports:
       - "3306:3306"
     environment:
@@ -29,9 +28,8 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-    volumes:
-      - ./database/data.sql:/docker-entrypoint-initdb.d/data.sql
-      - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf
+        ##volumes:
+        ##- ./database/data.sql:/docker-entrypoint-initdb.d/data.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
