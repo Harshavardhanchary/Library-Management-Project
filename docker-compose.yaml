@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: harshavardhan303/library-manager-backend
+    image: harshavardhan303/library-manager-backend:${DOCKER_TAG}
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -17,7 +17,7 @@ services:
       - app-network
 
   db:
-    image: harshavardhan303/libary-manager-db
+    image: harshavardhan303/libary-manager-db:${DOCKER_TAG}
     build:
       context: ./database
       dockerfile: Dockerfile
