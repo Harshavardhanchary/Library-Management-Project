@@ -10,6 +10,7 @@ pipeline {
         MYSQL_PASSWORD = credentials('MYSQL_PASSWORD')
         DB_PASSWORD = credentials('DB_PASSWORD')
         DB_USERNAME = credentials('DB_USERNAME')
+        DOCKER_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -74,7 +75,60 @@ DB_USERNAME=${env.DB_USERNAME}
                 }
             }
         }
+        stage('Docker-push') {
+            steps {
+                sh '''
+                docker push harshavardhan303/library-manager-backend:${BUILD_NUMBER}
+                docker push harshavardhan303/library-manager-db:${BUILD_NUMBER}
+                '''
+            }
+        }
+        stage ('Git-Login') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'git-cred', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    sh '''
+                    git config user.name "${GIT_USER}"
+                    git config user.email "harshavardhanchary7@gmail.com"
+                    echo "https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com" > ~/.git-credentials
+                    '''
+                    }
+                }
+            }
+        }
+        stage('Checkout Manifests') {
+            steps {
+                dir('manifests') {
+                git url: 'https://github.com/Harshavardhanchary/library-management-manifests.git', branch: 'main'
+                }
+            }
+        }
+        stage('update deployment') {
+            steps {
+                dir('manifests') {
+                    script {
+                        withCredentials([usernamePassword(credentialsId: 'git-cred', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        sh '''
+                        git config --global user.name "${GIT_USER}"
+                        git config --global user.email "harshavardhanchary7@gmail.com"
+                        git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/Harshavardhanchary/library-management-manifests.git
+                        chmod +x update-all.sh
+                        ./update-all.sh ${BUILD_NUMBER}
+                        git add .
+                        git commit -m "updated image number with ${BUILLD_NUMBER}"
+                        git push origin HEAD:main
+                        '''
+                        }
+                    }
+                }
+            }
+        }
+        stage('Shut-down services') {
+            steps {
+                sh 'docker-compose down'
+                sh 'docker system prune -f'
+                echo 'success'
+            }
+        }
     }
 }
-
-
